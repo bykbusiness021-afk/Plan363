@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Plan 363 - Secure Autopool System</title>
+    <title>Plan 363 - Single Device Login Autopool</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Arial, sans-serif; }
         body { background-color: #f4f7f6; color: #333; padding-bottom: 60px; }
@@ -11,7 +11,7 @@
         .container { max-width: 500px; margin: 0 auto; padding: 15px; }
         .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); margin-bottom: 20px; }
         h2 { color: #1e3c72; margin-bottom: 15px; font-size: 20px; border-bottom: 2px solid #f4f7f6; padding-bottom: 8px; }
-        .btn { background: #1e3c72; color: white; padding: 12px; border: none; border-radius: 6px; font-size: 16px; cursor: pointer; transition: 0.3s; width: 100%; margin-top: 10px; font-weight: bold; }
+        .btn { background: #1e3c72; color: white; padding: 12px; border: none; border-radius: 6px; font-size: 16px; cursor: pointer; transition: 0.3s; width: 100%; margin-top: 10px; font-weight: bold; text-align: center; display: block; text-decoration: none; }
         .btn:hover { background: #152e59; }
         .btn-secondary { background: #7f8c8d; }
         .btn-upgrade { background: linear-gradient(45deg, #f1c40f, #f39c12); color: #FFF; font-size: 18px; box-shadow: 0 4px 15px rgba(241, 196, 15, 0.4); border: none; }
@@ -19,7 +19,7 @@
         .wallet-box { background: #ebfef2; border-left: 4px solid #27ae60; }
         .stat-label { font-weight: bold; color: #444; }
         .stat-value { font-size: 18px; font-weight: bold; }
-        input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ccc; border-radius: 6px; font-size: 15px; }
+        input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ccc; border-radius: 6px; font-size: 15px; display: block; }
         .admin-section { background: #fff5f5; border: 2px dashed #e74c3c; max-width: 600px; margin: 30px auto; display: none; }
         .admin-section h2 { color: #e74c3c; border-bottom: 2px solid #fff1dc; }
         .page { display: none; }
@@ -33,16 +33,27 @@
 
     <header>
         <h1>PLAN 363</h1>
-        <p>सिक्योर एडमिन अप्रूवल सिस्टम</p>
+        <p>सिंगल डिवाइस लॉगइन प्रोटेक्शन</p>
     </header>
 
     <div class="container">
-        <!-- स्क्रीन 1: लॉगिन और साइनअप -->
+        <!-- स्क्रीन 1: मोबाइल नंबर + OTP लॉगिन -->
         <div id="authPage" class="card page active-page">
             <h2>अकाउंट लॉगिन / साइनअप</h2>
-            <input type="text" id="authUsername" placeholder="अपना यूज़रनेम दर्ज करें">
-            <input type="password" id="authPassword" placeholder="पासवर्ड दर्ज करें">
-            <button class="btn" onclick="handleAuth()">लॉगिन / अकाउंट बनाएं</button>
+            
+            <label style="font-weight: bold; font-size: 13px;">मोबाइल नंबर (10 अंक):</label>
+            <input type="tel" id="authMobile" placeholder="अपना मोबाइल नंबर दर्ज करें" maxlength="10" oninput="this.value=this.value.replace(/[^0-9]/g,'');">
+            
+            <label style="font-weight: bold; font-size: 13px;">पासवर्ड (सिर्फ नंबर, अधिकतम 10 अंक):</label>
+            <input type="password" id="authPassword" placeholder="पासवर्ड दर्ज करें" maxlength="10" oninput="this.value=this.value.replace(/[^0-9]/g,'');">
+            
+            <button id="otpBtn" class="btn" style="background: #2980b9;" onclick="sendDummyOTP()">OTP भेजें</button>
+            
+            <div id="otpContainer" style="display: none; margin-top: 15px; border-top: 1px dashed #ccc; padding-top: 15px;">
+                <label style="font-weight: bold; font-size: 13px; color: #27ae60;">दर्ज करें 4-अंकों का OTP:</label>
+                <input type="tel" id="authOTP" placeholder="चार अंकों का कोड डालें" maxlength="4" oninput="this.value=this.value.replace(/[^0-9]/g,'');">
+                <button class="btn" onclick="handleAuth()">वेरिफाई और लॉगिन करें</button>
+            </div>
         </div>
 
         <!-- स्क्रीन 2: UPI वेरिफिकेशन -->
@@ -59,7 +70,7 @@
             <h2>डैशबोर्ड: स्वागत है, <span id="lblUsername" style="color: #1e3c72;">User</span>!</h2>
             
             <div class="stat-box">
-                <span class="stat-label">करंट लेवल (Current Level):</span>
+                <span class="stat-label">करंट水平 (Current Level):</span>
                 <span class="stat-value" id="lblLevel" style="color: #f39c12;">Level 1</span>
             </div>
             <div class="stat-box">
@@ -104,7 +115,7 @@
     <div class="container">
         <div id="adminPanelBox" class="card admin-section">
             <h2>Admin Control Panel (Plan 363) ⚙ Zer0</h2>
-            <p style="font-size: 14px; margin-bottom: 10px;">सक्रिय यूज़र: <b id="adminCurrentUser" style="color: #1e3c72;">कोई नहीं</b></p>
+            <p style="font-size: 14px; margin-bottom: 10px;">सक्रिय मोबाइल: <b id="adminCurrentUser" style="color: #1e3c72;">कोई नहीं</b></p>
             
             <label style="font-weight: bold; font-size: 13px;">1. यूज़र की कुल कमाई सेट करें:</label>
             <input type="number" id="adminTotalInput" value="0">
@@ -128,43 +139,16 @@
 
     <script>
         let currentUser = "";
-        const ADMIN_PASSWORD = "admin123"; // यहाँ आप अपना सीक्रेट पासवर्ड बदल सकते हैं
+        let generatedOTP = "";
+        const ADMIN_PASSWORD = "admin123";
 
-        function showPage(pageId) {
-            document.querySelectorAll('.page').forEach(page => page.classList.remove('active-page'));
-            document.getElementById(pageId).classList.add('active-page');
-            if(currentUser) { loadUserData(); }
-        }
-
-        function handleAuth() {
-            let user = document.getElementById('authUsername').value.trim().toLowerCase();
-            let pass = document.getElementById('authPassword').value;
-            if(user === "" || pass === "") { alert("कृपया यूज़रनेम और पासवर्ड भरें!"); return; }
-            currentUser = user;
-            
-            if (!localStorage.getItem(currentUser)) {
-                let defaultData = {
-                    username: user,
-                    upiId: "",
-                    isUpiVerified: false,
-                    totalEarnings: 0,
-                    paidOut: 0,
-                    level: "Level 1",
-                    upgradeStatus: "none"
-                };
-                localStorage.setItem(currentUser, JSON.stringify(defaultData));
-            }
-            let data = JSON.parse(localStorage.getItem(currentUser));
-            if(data.isUpiVerified) { showPage('dashboardPage'); } else { showPage('upiPage'); }
-        }
-
-        function calculateLevel(earnings) {
-            if (earnings >= 32580) return "Level 5 Completed 🎉";
-            if (earnings >= 6480) return "Level 5";
-            if (earnings >= 1350) return "Level 4";
-            if (earnings >= 360) return "Level 3";
-            if (earnings >= 90) return "Level 2";
-            return "Level 1";
-        }
-
-        function loadUserData() {
+        // सिंगल डिवाइस लॉगिन सिक्योरिटी चेक करने का फंक्शन
+        function checkSessionSecurity() {
+            if (currentUser) {
+                let data = JSON.parse(localStorage.getItem(currentUser));
+                let localToken = sessionStorage.getItem("loginToken_" + currentUser);
+                
+                // यदि डेटाबेस का टोकन ब्राउज़र के टोकन से मैच नहीं करता, तो ऑटो-लॉगआउट कर दो
+                if (data && data.currentSessionToken !== localToken) {
+                    alert("⚠️ सुरक्षा चेतावनी: यह अकाउंट किसी दूसरे डिवाइस या ब्राउज़र में लॉगिन कर लिया गया है। आप यहाँ से लॉगआउट हो रहे हैं।");
+                    logout();
