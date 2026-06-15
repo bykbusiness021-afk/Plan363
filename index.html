@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plan 363 - Fast Autopool System</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Arial, sans-serif; }
+        body { background-color: #f4f7f6; color: #333; padding-bottom: 60px; }
+        header { background: linear-gradient(135deg, #1e3c72, #2a5298); color: white; padding: 20px; text-align: center; margin-bottom: 20px; }
+        .container { max-width: 500px; margin: 0 auto; padding: 15px; }
+        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); margin-bottom: 20px; }
+        h2 { color: #1e3c72; margin-bottom: 15px; font-size: 20px; border-bottom: 2px solid #f4f7f6; padding-bottom: 8px; }
+        .btn { background: #1e3c72; color: white; padding: 12px; border: none; border-radius: 6px; font-size: 16px; cursor: pointer; transition: 0.3s; width: 100%; margin-top: 10px; font-weight: bold; text-align: center; display: block; text-decoration: none; }
+        .btn:hover { background: #152e59; }
+        .btn-secondary { background: #7f8c8d; }
+        .btn-upgrade { background: linear-gradient(45deg, #f1c40f, #f39c12); color: #FFF; font-size: 18px; box-shadow: 0 4px 15px rgba(241, 196, 15, 0.4); border: none; }
+        .stat-box { display: flex; justify-content: space-between; background: #f9f9f9; padding: 12px; margin: 10px 0; border-radius: 6px; border-left: 4px solid #1e3c72; }
+        .wallet-box { background: #ebfef2; border-left: 4px solid #27ae60; }
+        .stat-label { font-weight: bold; color: #444; }
+        .stat-value { font-size: 18px; font-weight: bold; }
+        input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ccc; border-radius: 6px; font-size: 15px; display: block; }
+        .admin-section { background: #fff5f5; border: 2px dashed #e74c3c; max-width: 600px; margin: 30px auto; display: none; }
+        .admin-section h2 { color: #e74c3c; border-bottom: 2px solid #fff1dc; }
+        .page { display: none; }
+        .active-page { display: block; }
+        .badge { background: #e74c3c; color: white; padding: 3px 8px; border-radius: 5px; font-size: 12px; }
+        .badge-success { background: #27ae60; }
+        .badge-purple { background: #9b59b6; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>PLAN 363</h1>
+        <p>फ़ास्ट मोबाइल लॉगइन प्रोटेक्शन</p>
+    </header>
+
+    <div class="container">
+        <!-- स्क्रीन 1: मोबाइल नंबर + पासवर्ड डायरेक्ट लॉगिन -->
+        <div id="authPage" class="card page active-page">
+            <h2>अकाउंट लॉगिन / साइनअप</h2>
+            <p style="font-size: 13px; color: #7f8c8d; margin-bottom: 15px;">यदि पहली बार आ रहे हैं, तो नंबर और नया पासवर्ड डालकर "लॉगिन / अकाउंट बनाएं" बटन दबाएं।</p>
+            
+            <label style="font-weight: bold; font-size: 13px;">मोबाइल नंबर (10 अंक):</label>
+            <input type="tel" id="authMobile" placeholder="अपना मोबाइल नंबर दर्ज करें" maxlength="10" oninput="this.value=this.value.replace(/[^0-9]/g,'');">
+            
+            <label style="font-weight: bold; font-size: 13px;">पासवर्ड (सिर्फ नंबर, अधिकतम 10 अंक):</label>
+            <input type="password" id="authPassword" placeholder="पासवर्ड दर्ज करें" maxlength="10" oninput="this.value=this.value.replace(/[^0-9]/g,'');">
+            
+            <button class="btn" onclick="handleAuth()">लॉगिन / अकाउंट बनाएं</button>
+        </div>
+
+        <!-- स्क्रीन 2: UPI वेरिफिकेशन -->
+        <div id="upiPage" class="card page">
+            <h2>UPI अकाउंट वेरिफिकेशन (₹1)</h2>
+            <input type="text" id="userUpiInput" placeholder="example@apl / mobile@ybl">
+            <div style="margin: 10px 0;">स्टेटस: <span id="upiBadge" class="badge">नॉट वेरिफाइड</span></div>
+            <button id="verifyBtn" class="btn" onclick="verifyUpiId()">₹1 भेजकर UPI वेरिफाई करें</button>
+            <button id="goToDashboardBtn" class="btn btn-secondary" onclick="showPage('dashboardPage')" style="display: none;">डैशबोर्ड पर जाएं</button>
+        </div>
+
+        <!-- SCREEN 3: मुख्य यूज़र डैशबोर्ड -->
+        <div id="dashboardPage" class="card page">
+            <h2>डैशबोर्ड: स्वागत है, <span id="lblUsername" style="color: #1e3c72;">User</span>!</h2>
+            
+            <div class="stat-box">
+                <span class="stat-label">करंट लेवल (Current Level):</span>
+                <span class="stat-value" id="lblLevel" style="color: #f39c12;">Level 1</span>
+            </div>
+            <div class="stat-box">
+                <span class="stat-label">पूल स्टेटस (Pool Status):</span>
+                <span class="stat-value" id="lblPoolStatus"><span class="badge badge-success">Pool 1 Active</span></span>
+            </div>
+            <div class="stat-box">
+                <span class="stat-label">Total Earnings (कुल कमाई):</span>
+                <span class="stat-value" id="lblTotal" style="color: #2980b9;">₹0</span>
+            </div>
+            <div class="stat-box">
+                <span class="stat-label">Paid Out (ऑफलाइन भेजा गया):</span>
+                <span class="stat-value" id="lblPaid" style="color: #7f8c8d;">₹0</span>
+            </div>
+            <div class="stat-box wallet-box">
+                <span class="stat-label" style="color: #27ae60;">Wallet Balance (बचा हुआ):</span>
+                <span class="stat-value" id="lblBalance" style="color: #27ae60;">₹0</span>
+            </div>
+            <div style="background: #f1f2f6; padding: 10px; border-radius: 6px; margin-top: 15px; font-size: 13px;">
+                <b>रजिस्टर्ड UPI (Locked):</b> <br>
+                <span id="lblLockedUpi" style="color: #c0392b; font-weight: bold;">-</span>
+            </div>
+
+            <!-- अपग्रेड कंट्रोल कंटेनर -->
+            <div id="upgradeContainer" style="display: none; margin-top: 20px; background: #fff9e6; padding: 15px; border-radius: 8px; border: 1px dashed #f39c12;">
+                <div id="upgradeActionArea">
+                    <p style="font-size: 13px; color: #d35400; font-weight: bold; text-align: center; margin-bottom: 8px;">🎉 आपका Plan 363 चक्र पूरा हो गया है!</p>
+                    <button class="btn btn-upgrade" onclick="clickUpgradeButton()">Next Pool (₹5,000) के लिए अप्लाई करें</button>
+                </div>
+                <div id="upgradePendingMessage" style="display: none; text-align: center;">
+                    <p style="color: #f39c12; font-weight: bold; font-size: 15px;">⏳ अपग्रेड रिक्वेस्ट पेंडिंग है...</p>
+                    <p style="font-size: 12px; color: #555; margin-top: 5px;">एडमिन को किसी भी माध्यम (Cash/UPI) से ₹5000 का भुगतान करें। एडमिन से पेमेंट कन्फर्म होते ही आपकी आईडी प्रमोट हो जाएगी।</p>
+                </div>
+            </div>
+            
+            <button class="btn" style="background:#e67e22; margin-top: 15px;" onclick="openAdminPanel()">Admin Login 🔒</button>
+            <button class="btn btn-secondary" onclick="logout()" style="margin-top: 10px;">Log Out</button>
+        </div>
+    </div>
+
+    <!-- स्क्रीन 4: एडमिन कंट्रोल पैनल -->
+    <div class="container">
+        <div id="adminPanelBox" class="card admin-section">
+            <h2>Admin Control Panel (Plan 363) ⚙ Zer0</h2>
+            <p style="font-size: 14px; margin-bottom: 10px;">सक्रिय मोबाइल: <b id="adminCurrentUser" style="color: #1e3c72;">कोई नहीं</b></p>
+            
+            <label style="font-weight: bold; font-size: 13px;">1. यूज़र की कुल कमाई सेट करें:</label>
+            <input type="number" id="adminTotalInput" value="0">
+            
+            <label style="font-weight: bold; font-size: 13px;">2. जितना पैसा आपने ऑफलाइन PAID कर दिया (₹):</label>
+            <input type="number" id="adminPaidInput" value="0">
+            
+            <button class="btn" style="background: #e74c3c;" onclick="updateUserBalanceByAdmin()">डेटा अपडेट करें</button>
+            
+            <div id="adminApprovalBox" style="display: none; margin-top: 15px; padding-top: 15px; border-top: 2px dashed #f39c12; background: #fffaf0; padding: 10px; border-radius: 6px;">
+                <p style="color: #d35400; font-weight: bold; font-size: 13px;">⚠️ इस यूज़र ने ₹5000 अपग्रेड के लिए अप्लाई किया है!</p>
+                <button class="btn" style="background: #27ae60;" onclick="approveUpgradeByAdmin()">₹5000 पेमेंट प्राप्त हुआ - पूल एक्टिव करें</button>
+            </div>
+
+            <div style="border-top: 1px dashed #e74c3c; margin-top: 15px; padding-top: 15px;">
+                <button class="btn" style="background: #7f8c8d;" onclick="unlockUpiByAdmin()">UPI ID अनलॉक करें</button>
+                <button class="btn" style="background: #333; margin-top: 5px;" onclick="closeAdminPanel()">Admin पैनल बंद करें</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentUser = "";
+        const ADMIN_PASSWORD = "admin123";
+
+        function checkSessionSecurity() {
+            if (currentUser) {
+                let data = JSON.parse(localStorage.getItem(currentUser));
+                let localToken = sessionStorage.getItem("loginToken_" + currentUser);
+                if (data && data.currentSessionToken !== localToken) {
+                    alert("⚠️ सुरक्षा चेतावनी: यह अकाउंट किसी दूसरे डिवाइस या ब्राउज़र में लॉगिन कर लिया गया है। आप यहाँ से लॉगआउट हो रहे हैं।");
+                    logout();
+                }
+            }
+        }
+
+        setInterval(checkSessionSecurity, 3000);
+
+        function showPage(pageId) {
+            document.querySelectorAll('.page').forEach(page => page.classList.remove('active-page'));
+            document.getElementById(pageId).classList.add('active-page');
+            if(currentUser) { loadUserData(); }
+        }
+
+        function handleAuth() {
+            let mobile = document.getElementById('authMobile').value.trim();
+            let pass = document.getElementById('authPassword').value;
